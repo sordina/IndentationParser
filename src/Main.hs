@@ -1,4 +1,6 @@
 module Main where
 
+import qualified IndentationParser as IP
+
 main :: IO ()
-main = print "hello world"
+main = IP.main
