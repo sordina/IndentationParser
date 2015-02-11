@@ -4,14 +4,9 @@
 module IndentationParser where
 
 import Data.Tree
-import Data.Char
 import Control.Arrow
 import Text.RawString.QQ
 import Test.QuickCheck
-import Data.List.Split
-
--- main = interact (renderF . parse)
-main = putStr . renderF . parse $ testTree
 
 data Line = L {indent :: Int, line :: String} deriving (Eq, Show)
 
@@ -31,28 +26,38 @@ indented = sum . map value . takeWhile blankChar
 text :: String -> String
 text = dropWhile blankChar
 
+blank :: String -> Bool
 blank = all blankChar
 
+blankChar :: Char -> Bool
 blankChar = flip elem " \t"
 
+prop_indented_spaces :: NonNegative Int -> String -> Bool
 prop_indented_spaces (NonNegative n) s = indented (replicate n ' '  ++ "x" ++ s) ==     n
+
+prop_indented_tabs :: NonNegative Int -> String -> Bool
 prop_indented_tabs   (NonNegative n) s = indented (replicate n '\t' ++ "x" ++ s) == 4 * n
 
+value :: Num a => Char -> a
 value '\t' = 4
 value ' '  = 1
 value _    = 0
 
 -- TESTING
 
+prop_parse_test :: Bool
 prop_parse_test = renderF (parse testTree) == testTree
+
+prop_parse :: String -> Bool
 prop_parse    x = renderF (parse x) == renderF (parse (renderF (parse x)))
 
 renderF :: Forest String -> String
 renderF = unlines . map (render "")
   where
   render :: String -> Tree String -> String
-  render p (Node s ls) = p ++ s ++ concat (map (render ("\n " ++ drop 1 p)) ls)
+  render p (Node s ls) = p ++ s ++ concatMap (render ("\n " ++ drop 1 p)) ls
 
+testTree :: String
 testTree = drop 1 [r|
 a
  b
